@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/go-martini/martini"
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/binding"
 	"github.com/martini-contrib/render"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -13,17 +14,34 @@ var (
 	sqlConnection string
 )
 
+type Item struct {
+	Id          int64  `form:"id"`
+	Title       string `form:"title"`
+	Description string `form:"description"`
+	UserName    string `form:"user_name"`
+}
+
 func main() {
 	var err error
 
-	sqlConnection = "doug:doug@tcp(127.0.0.1:3306)/martini-gorm?parseTime=True"
+	// MySQL
+	// sqlConnection = "doug:doug@tcp(127.0.0.1:3306)/martini-gorm?parseTime=True"
+	// db, err = gorm.Open("mysql", sqlConnection)
 
-	db, err = gorm.Open("mysql", sqlConnection)
-
+	// Sqlite
+	db, err := gorm.Open("sqlite3", "/tmp/gorm.db")
 	if err != nil {
 		panic(err)
 		return
 	}
+
+	db.DB()
+	err = db.DB().Ping()
+	if err != nil {
+		panic(err)
+		return
+	}
+	db.AutoMigrate(&Item{})
 
 	m := martini.Classic()
 
@@ -67,5 +85,5 @@ func main() {
 		r.Redirect("/")
 	})
 
-	m.Run()
+	m.RunOnAddr(":8080")
 }
